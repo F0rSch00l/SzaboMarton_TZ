@@ -1,11 +1,11 @@
 const express = require("express");
-const mysql2 = require("mysql2");
+const mysql2 = require("mysql2/promise");
 
 const app = express();
 
 app.use(express.json());
 
-const conn = mysql2.createConnection({
+const conn = mysql2.createPool({
     host: "localhost",
     port: 3307,
     user: "root",
@@ -92,6 +92,54 @@ app.get("/mufajok/statisztika", (req, res) => {
         res.status(201).send(results);
     });
 });
+
+app.post('/users', async (req, res) => {
+    
+    
+    const {mufaj_id ,cim, kiadasi_ev, oldalszam, kolcsonozheto} = req.body;
+
+    const query = "INSERT INTO konyvek (mufaj_id, cim, kiadasi_ev, oldalszam, kolcsonozheto) VALUES (?,?,?,?,?)";
+    try {
+        const [results] = await conn.execute(query, [mufaj_id, cim, kiadasi_ev, oldalszam, kolcsonozheto]);
+        res.status(200).send("Feltöltés sikeres")
+    }
+    catch(err)
+    {
+        
+    
+             return res.status(500).send("Hiba az adatbázisba való feltöltés során: " + err);
+           
+    }
+});
+
+app.delete("/delUser", async (req, res) => {
+    
+    const {id} = req.body;
+
+    const query = "DELETE FROM konyvek WHERE id = ?";
+    try{
+        const [results] = await conn.execute(query, [id]);
+        res.status(200).send("Törlés sikeres");
+    }
+    catch(err){
+        return res.status(500).send("Hiba: " + err)
+    }
+})
+
+app.post("/updateTitle", async (req, res) => {
+    const {id, paramValue} = req.body;
+
+    const query = "UPDATE konyvek SET cim = ? WHERE id LIKE ?";
+
+    try{
+        const [results] = await conn.execute(query, [paramValue, id]);
+        res.status(200).send("Frissítés sikeres");
+    }
+    catch(err)
+    {
+        return res.status(500).send("Hiba: " + err)
+    }
+})
 
 
 //Done
